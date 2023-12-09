@@ -1,0 +1,36 @@
+before:
+  hooks:
+    - go mod tidy
+    - rm -rf completions
+    - mkdir completions
+    - sh -c 'go run . completion "bash" >./completions/arc.bash'
+    - sh -c 'go run . completion "zsh" >./completions/arc.zsh'
+    - sh -c 'go run . completion "fish" >./completions/arc.fish'
+changelog:
+  skip: true
+builds:
+  - binary: arc
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+checksum:
+  name_template: "checksums.txt"
+archives:
+  - files:
+      - README.md
+      - LICENSE-MIT
+      - completions/*
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+brews:
+  - name: arc
+    homepage: https://github.com/pomdtr/ray
+    repository:
+      owner: pomdtr
+      name: homebrew-tap
+    install: |-
+      bin.install "ray"
+      bash_completion.install "completions/ray.bash"
+      zsh_completion.install "completions/ray.zsh"
+      fish_completion.install "completions/ray.fish"
