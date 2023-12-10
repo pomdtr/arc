@@ -1,0 +1,6 @@
+{
+    "markdownlint.ignore": [
+        "docs.md"
+    ],
+    "markdown.validate.referenceLinks.enabled": "ignore"
+}

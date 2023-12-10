@@ -410,8 +410,6 @@ func NewCmdTabExecute() *cobra.Command {
 				javascript = escapeJavascript(string(content))
 			}
 
-			cmd.PrintErrln(javascript)
-
 			var osascript string
 			if cmd.Flags().Changed("id") {
 				osascript = fmt.Sprintf(`tell application "Arc"
