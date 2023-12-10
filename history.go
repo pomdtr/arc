@@ -33,8 +33,9 @@ func NewCmdHistory() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:  "history",
-		Args: cobra.MaximumNArgs(1),
+		Use:   "history",
+		Short: "Search history",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			dbFile, err := os.Open(historyPath)
 			if err != nil {

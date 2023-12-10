@@ -16,7 +16,8 @@ import (
 
 func NewCmdSpace() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "space",
+		Use:   "space",
+		Short: "Manage spaces",
 	}
 
 	cmd.AddCommand(NewCmdSpaceFocus())
@@ -25,23 +26,27 @@ func NewCmdSpace() *cobra.Command {
 }
 
 func NewCmdSpaceFocus() *cobra.Command {
+	var flags struct {
+		ID int
+	}
 	cmd := &cobra.Command{
-		Use:  "focus",
-		Args: cobra.ExactArgs(1),
+		Use:   "focus",
+		Short: "Focus a space by ID",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spaceIdx, err := strconv.Atoi(args[0])
-			if err != nil {
-				return fmt.Errorf("invalid space index: %s", args[0])
+			if _, err := runApplescript(fmt.Sprintf(`tell application "Arc"
+				tell front window
+			  		tell space %d to focus
+				end tell
+		  	end tell`, flags.ID)); err != nil {
+				return err
 			}
 
-			_, err = runApplescript(fmt.Sprintf(`tell application "Arc"
-			tell front window
-			  tell space %d to focus
-			end tell
-		  end tell`, spaceIdx))
-			return err
+			return nil
 		},
 	}
+
+	cmd.Flags().IntVarP(&flags.ID, "id", "i", 0, "space id")
+	cmd.MarkFlagRequired("id")
 
 	return cmd
 }
@@ -60,7 +65,8 @@ func NewCmdSpaceList() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use: "list",
+		Use:   "list",
+		Short: "List spaces",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output, err := runApplescript(listSpacesScript)
 			if err != nil {

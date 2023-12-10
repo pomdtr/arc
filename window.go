@@ -1,18 +1,32 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"strconv"
+	"os"
 
+	_ "embed"
+
+	"github.com/cli/go-gh/pkg/tableprinter"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
+
+type Window struct {
+	ID    int    `json:"id"`
+	Title string `json:"title"`
+}
 
 func NewCmdWindow() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "window",
+		Short: "Manage windows",
+		Use:   "window",
 	}
 
 	cmd.AddCommand(NewCmdWindowCreate())
+	cmd.AddCommand(NewCmdWindowClose())
+	cmd.AddCommand(NewCmdWindowList())
 
 	return cmd
 }
@@ -20,25 +34,41 @@ func NewCmdWindow() *cobra.Command {
 func NewCmdWindowCreate() *cobra.Command {
 	var flags struct {
 		Incognito bool
+		Little    bool
 	}
 
 	cmd := &cobra.Command{
-		Use: "create",
+		Use:   "create [url]",
+		Short: "Create a new window",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var osascript string
+			var applescript string
 			if flags.Incognito {
-				osascript = `tell application "Arc"
+				applescript = `tell application "Arc"
 					make new window with properties {incognito:true}
 					activate
 				end tell`
 			} else {
-				osascript = `tell application "Arc"
+				applescript = `tell application "Arc"
 					make new window
-					activate
 				end tell`
 			}
 
-			if _, err := runApplescript(osascript); err != nil {
+			if _, err := runApplescript(applescript); err != nil {
+				return err
+			}
+
+			if len(args) > 0 {
+				if _, err := runApplescript(fmt.Sprintf(`tell application "Arc"
+					tell front window
+						make new tab with properties {URL:"%s"}
+					end tell
+				end tell`, args[0])); err != nil {
+					return err
+				}
+			}
+
+			if _, err := runApplescript(`tell application "Arc" to activate`); err != nil {
 				return err
 			}
 
@@ -51,12 +81,54 @@ func NewCmdWindowCreate() *cobra.Command {
 	return cmd
 }
 
+//go:embed applescript/list-windows.applescript
+var listWindowsScript string
+
 func NewCmdWindowList() *cobra.Command {
+	flags := struct {
+		Json bool
+	}{}
+
 	cmd := &cobra.Command{
-		Use: "list",
+		Use:   "list",
+		Short: "List windows",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO
-			return nil
+			output, err := runApplescript(listWindowsScript)
+			if err != nil {
+				return err
+			}
+
+			var windows []Window
+			if err := json.Unmarshal(output, &windows); err != nil {
+				return err
+			}
+
+			if flags.Json {
+				encoder := json.NewEncoder(cmd.OutOrStdout())
+				encoder.SetIndent("", "  ")
+				encoder.SetEscapeHTML(false)
+				return encoder.Encode(windows)
+			}
+
+			var printer tableprinter.TablePrinter
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				printer = tableprinter.New(os.Stdout, false, 0)
+			} else {
+				w, _, err := term.GetSize(int(os.Stdout.Fd()))
+				if err != nil {
+					return err
+				}
+
+				printer = tableprinter.New(os.Stdout, true, w)
+			}
+
+			for _, window := range windows {
+				printer.AddField(fmt.Sprintf("%d", window.ID))
+				printer.AddField(window.Title)
+				printer.EndRow()
+			}
+
+			return printer.Render()
 		},
 	}
 
@@ -64,33 +136,31 @@ func NewCmdWindowList() *cobra.Command {
 }
 
 func NewCmdWindowClose() *cobra.Command {
+	var flags struct {
+		ID []int
+	}
+
 	cmd := &cobra.Command{
-		Use:  "close",
-		Args: cobra.MaximumNArgs(1),
+		Use:   "close",
+		Short: "Close a window",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var osascript string
-			if len(args) > 0 {
-				index, err := strconv.Atoi(args[0])
-				if err != nil {
-					return fmt.Errorf("invalid window index: %s", args[0])
+			var applescript string
+			for _, id := range flags.ID {
+				if cmd.Flags().Changed("id") {
+					applescript = fmt.Sprintf(`tell application "Arc" to tell window %d to close`, id)
+				} else {
+					applescript = `tell application "Arc" to tell front window to close`
 				}
-
-				osascript = fmt.Sprintf(`tell application "Arc"
-					close window %d
-				end tell`, index)
-			} else {
-				osascript = `tell application "Arc"
-					close front window
-				end tell`
-			}
-
-			if _, err := runApplescript(osascript); err != nil {
-				return err
+				if _, err := runApplescript(applescript); err != nil {
+					return err
+				}
 			}
 
 			return nil
 		},
 	}
 
+	cmd.Flags().IntSliceVarP(&flags.ID, "id", "i", nil, "window id")
 	return cmd
 }

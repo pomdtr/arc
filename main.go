@@ -23,7 +23,8 @@ func runApplescript(code string) ([]byte, error) {
 
 func NewCmdVersion() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "version",
+		Use:   "version",
+		Short: "Print the version of Arc",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output, err := runApplescript(`tell application "Arc" to return version`)
 			if err != nil {
@@ -41,6 +42,7 @@ func NewCmdVersion() *cobra.Command {
 func main() {
 	cmd := cobra.Command{
 		Use:          "arc",
+		Short:        "Arc Companion CLI",
 		SilenceUsage: true,
 	}
 
