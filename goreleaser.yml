@@ -21,16 +21,14 @@ archives:
       - README.md
       - LICENSE-MIT
       - completions/*
-snapshot:
-  name_template: "{{ incpatch .Version }}-next"
 brews:
   - name: arc
-    homepage: https://github.com/pomdtr/ray
+    homepage: https://github.com/pomdtr/arc
     repository:
       owner: pomdtr
       name: homebrew-tap
     install: |-
-      bin.install "ray"
-      bash_completion.install "completions/ray.bash"
-      zsh_completion.install "completions/ray.zsh"
-      fish_completion.install "completions/ray.fish"
+      bin.install "arc"
+      bash_completion.install "completions/arc.bash"
+      zsh_completion.install "completions/arc.zsh"
+      fish_completion.install "completions/arc.fish"
