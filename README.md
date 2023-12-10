@@ -16,4 +16,4 @@ See the `sunbeam completion` command to generate completion scripts for your she
 
 ## Usage
 
-See the [auto-generated documentation](./docs.md).
+Use `arc help` to see the available commands.
