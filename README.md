@@ -1,5 +1,7 @@
 # Arc CLI
 
+![screenshot](./static/screenshot.png)
+
 ## Installation
 
 ```sh
