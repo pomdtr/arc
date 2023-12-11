@@ -123,6 +123,7 @@ func NewCmdHistory() *cobra.Command {
 
 	cmd.Flags().IntVarP(&flags.limit, "limit", "l", 100, "limit")
 	cmd.Flags().StringVarP(&flags.query, "query", "q", "", "query")
+	cmd.Flags().BoolVar(&flags.json, "json", false, "output as json")
 
 	return cmd
 }

@@ -164,13 +164,12 @@ func NewCmdTabFocus() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "focus",
-		Short: "Focus a tab by id",
-		Args:  cobra.ExactArgs(1),
+		Use:   "select",
+		Short: "Select a tab by id",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if _, err := runApplescript(fmt.Sprintf(`tell application "Arc"
 				tell front window
-			  		tell tab %d to focus
+			  		tell tab %d to select
 				end tell
 				activate
 			end tell`, flags.ID)); err != nil {
