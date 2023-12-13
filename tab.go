@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strconv"
@@ -54,7 +55,7 @@ func NewCmdTab() *cobra.Command {
 
 	cmd.AddCommand(NewCmdTabGet())
 	cmd.AddCommand(NewCmdTabList())
-	cmd.AddCommand(NewCmdTabFocus())
+	cmd.AddCommand(NewCmdTabSelect())
 	cmd.AddCommand(NewCmdTabCreate())
 	cmd.AddCommand(NewCmdTabClose())
 	cmd.AddCommand(NewCmdTabReload())
@@ -158,30 +159,29 @@ func NewCmdTabCreate() *cobra.Command {
 	return cmd
 }
 
-func NewCmdTabFocus() *cobra.Command {
-	var flags struct {
-		ID int
-	}
-
+func NewCmdTabSelect() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "select",
 		Short: "Select a tab by id",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			tabId, err := strconv.Atoi(args[0])
+			if err != nil {
+				return err
+			}
+
 			if _, err := runApplescript(fmt.Sprintf(`tell application "Arc"
 				tell front window
 			  		tell tab %d to select
 				end tell
 				activate
-			end tell`, flags.ID)); err != nil {
+			end tell`, tabId)); err != nil {
 				return err
 			}
 
 			return nil
 		},
 	}
-
-	cmd.Flags().IntVarP(&flags.ID, "id", "i", 0, "tab id")
-	cmd.MarkFlagRequired("id")
 
 	return cmd
 }
@@ -289,35 +289,32 @@ func NewCmdTabList() *cobra.Command {
 }
 
 func NewCmdTabClose() *cobra.Command {
-	var flags struct {
-		ID []int
-	}
-
 	cmd := &cobra.Command{
 		Use:   "close",
 		Short: "Close a tab",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !cmd.Flags().Changed("id") {
-				osascript := `tell application "Arc"
+			if len(args) == 0 {
+				if _, err := runApplescript(`tell application "Arc"
 					tell front window
-					  tell active tab to close
+						tell active tab to close
 					end tell
-				end tell`
-
-				if _, err := runApplescript(osascript); err != nil {
+				end tell`); err != nil {
 					return err
 				}
+				return nil
 			}
 
-			for _, id := range flags.ID {
-				osascript := fmt.Sprintf(`tell application "Arc"
-				tell front window
-				  tell tab %d to close
-				end tell
-			  end tell`, id)
-
-				if _, err := runApplescript(osascript); err != nil {
+			for _, arg := range args {
+				tabID, err := strconv.Atoi(arg)
+				if err != nil {
+					return err
+				}
+				if _, err := runApplescript(fmt.Sprintf(`tell application "Arc"
+					tell front window
+				  		tell tab %d to close
+					end tell
+			  	end tell`, tabID)); err != nil {
 					return err
 				}
 			}
@@ -326,58 +323,49 @@ func NewCmdTabClose() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().IntSliceVarP(&flags.ID, "id", "i", nil, "tab id")
 	return cmd
 }
 
 func NewCmdTabReload() *cobra.Command {
-	var flags struct {
-		ID []int
-	}
-
 	cmd := &cobra.Command{
 		Use:   "reload",
 		Short: `Reload a tab"`,
-
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var osascript string
-			if !cmd.Flags().Changed("id") {
-				osascript = `tell application "Arc"
-					tell front window
-					  tell active tab to reload
-					end tell
-				end tell`
-				if _, err := runApplescript(osascript); err != nil {
+			if len(args) == 0 {
+				if _, err := runApplescript(`tell application "Arc"
+				tell front window
+				  tell active tab to reload
+				end tell
+			end tell`); err != nil {
 					return err
 				}
 
 				return nil
 			}
 
-			for _, id := range flags.ID {
-				osascript = fmt.Sprintf(`tell application "Arc"
-					tell front window
-					  tell tab %d to reload
-					end tell
-				  end tell`, id)
+			tabID, err := strconv.Atoi(args[0])
+			if err != nil {
+				return err
+			}
 
-				if _, err := runApplescript(osascript); err != nil {
-					return err
-				}
+			if _, err := runApplescript(fmt.Sprintf(`tell application "Arc"
+			tell front window
+			  tell tab %d to reload
+			end tell
+		  end tell`, tabID)); err != nil {
+				return err
 			}
 
 			return nil
 		},
 	}
 
-	cmd.Flags().IntSliceVarP(&flags.ID, "id", "i", nil, "tab id")
-
 	return cmd
 }
 
 func NewCmdTabExecute() *cobra.Command {
 	var flags struct {
-		ID   int
 		Eval string
 	}
 
@@ -385,40 +373,26 @@ func NewCmdTabExecute() *cobra.Command {
 		Use:   "exec <script>",
 		Short: "Execute javascript in the active tab",
 		Args:  cobra.MaximumNArgs(1),
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(flags.Eval) == 0 && len(args) == 0 {
-				return fmt.Errorf("either --eval or a script is required")
-			}
-
-			if len(flags.Eval) > 0 && len(args) > 0 {
-				return fmt.Errorf("only one of --eval or a script is allowed")
-			}
-
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var javascript string
-			if len(flags.Eval) > 0 {
+			if cmd.Flags().Changed("eval") {
 				javascript = escapeJavascript(flags.Eval)
-			} else {
-				content, err := os.ReadFile(args[0])
+			} else if !isatty.IsTerminal(os.Stdin.Fd()) {
+				content, err := io.ReadAll(os.Stdin)
 				if err != nil {
 					return err
 				}
+				if len(content) == 0 {
+					return fmt.Errorf("no javascript provided")
+				}
 
 				javascript = escapeJavascript(string(content))
+			} else {
+				return fmt.Errorf("no javascript provided")
 			}
 
 			var osascript string
-			if cmd.Flags().Changed("id") {
-				osascript = fmt.Sprintf(`tell application "Arc"
-				tell front window
-				  tell tab %d
-				  	execute javascript "%s"
-				  end tell
-				end tell
-			  end tell`, flags.ID, javascript)
-			} else {
+			if len(args) == 0 {
 				osascript = fmt.Sprintf(`tell application "Arc"
 				tell front window
 				  tell active tab
@@ -426,6 +400,18 @@ func NewCmdTabExecute() *cobra.Command {
 				  end tell
 				end tell
 			  end tell`, javascript)
+			} else {
+				tabID, err := strconv.Atoi(args[0])
+				if err != nil {
+					return err
+				}
+				osascript = fmt.Sprintf(`tell application "Arc"
+				tell front window
+				  tell tab %d
+				  	execute javascript "%s"
+				  end tell
+				end tell
+			  end tell`, tabID, javascript)
 			}
 
 			output, err := runApplescript(osascript)
@@ -441,7 +427,6 @@ func NewCmdTabExecute() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().IntVarP(&flags.ID, "id", "i", 0, "tab id")
 	cmd.Flags().StringVarP(&flags.Eval, "eval", "e", "", "javascript to evaluate")
 	return cmd
 }

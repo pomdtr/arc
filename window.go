@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	_ "embed"
 
@@ -136,31 +137,31 @@ func NewCmdWindowList() *cobra.Command {
 }
 
 func NewCmdWindowClose() *cobra.Command {
-	var flags struct {
-		ID []int
-	}
-
 	cmd := &cobra.Command{
 		Use:   "close",
 		Short: "Close a window",
-		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var applescript string
-			for _, id := range flags.ID {
-				if cmd.Flags().Changed("id") {
-					applescript = fmt.Sprintf(`tell application "Arc" to tell window %d to close`, id)
-				} else {
-					applescript = `tell application "Arc" to tell front window to close`
-				}
-				if _, err := runApplescript(applescript); err != nil {
+			if len(args) == 0 {
+				if _, err := runApplescript(`tell application "Arc" to tell front window to close`); err != nil {
 					return err
 				}
+				return nil
 			}
 
+			for _, id := range args {
+				windowID, err := strconv.Atoi(id)
+				if err != nil {
+					return err
+				}
+
+				if _, err := runApplescript(fmt.Sprintf(`tell application "Arc" to tell window %d to close`, windowID)); err != nil {
+					return err
+				}
+
+			}
 			return nil
 		},
 	}
 
-	cmd.Flags().IntSliceVarP(&flags.ID, "id", "i", nil, "window id")
 	return cmd
 }

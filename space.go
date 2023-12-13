@@ -26,27 +26,26 @@ func NewCmdSpace() *cobra.Command {
 }
 
 func NewCmdSpaceFocus() *cobra.Command {
-	var flags struct {
-		ID int
-	}
 	cmd := &cobra.Command{
 		Use:   "focus",
-		Short: "Focus a space by ID",
+		Short: "Focus a space",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			spaceID, err := strconv.Atoi(args[0])
+			if err != nil {
+				return err
+			}
 			if _, err := runApplescript(fmt.Sprintf(`tell application "Arc"
 				tell front window
 			  		tell space %d to focus
 				end tell
-		  	end tell`, flags.ID)); err != nil {
+		  	end tell`, spaceID)); err != nil {
 				return err
 			}
 
 			return nil
 		},
 	}
-
-	cmd.Flags().IntVarP(&flags.ID, "id", "i", 0, "space id")
-	cmd.MarkFlagRequired("id")
 
 	return cmd
 }
