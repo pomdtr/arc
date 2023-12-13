@@ -213,6 +213,7 @@ arc history [flags]
 
 ```
   -h, --help           help for history
+      --json           output as json
   -l, --limit int      limit (default 100)
   -q, --query string   query
 ```
@@ -229,7 +230,7 @@ Manage spaces
 
 ## arc space focus
 
-Focus a space by ID
+Focus a space
 
 ```
 arc space focus [flags]
@@ -238,8 +239,7 @@ arc space focus [flags]
 ### Options
 
 ```
-  -h, --help     help for focus
-  -i, --id int   space id
+  -h, --help   help for focus
 ```
 
 ## arc space help
@@ -297,8 +297,7 @@ arc tab close [flags]
 ### Options
 
 ```
-  -h, --help      help for close
-  -i, --id ints   tab id
+  -h, --help   help for close
 ```
 
 ## arc tab create
@@ -330,22 +329,6 @@ arc tab exec <script> [flags]
 ```
   -e, --eval string   javascript to evaluate
   -h, --help          help for exec
-  -i, --id int        tab id
-```
-
-## arc tab focus
-
-Focus a tab by id
-
-```
-arc tab focus [flags]
-```
-
-### Options
-
-```
-  -h, --help     help for focus
-  -i, --id int   tab id
 ```
 
 ## arc tab get
@@ -453,8 +436,21 @@ arc tab reload [flags]
 ### Options
 
 ```
-  -h, --help      help for reload
-  -i, --id ints   tab id
+  -h, --help   help for reload
+```
+
+## arc tab select
+
+Select a tab by id
+
+```
+arc tab select [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for select
 ```
 
 ## arc version
@@ -492,8 +488,7 @@ arc window close [flags]
 ### Options
 
 ```
-  -h, --help      help for close
-  -i, --id ints   window id
+  -h, --help   help for close
 ```
 
 ## arc window create
