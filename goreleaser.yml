@@ -1,3 +1,4 @@
+version: 2
 before:
   hooks:
     - go mod tidy
@@ -7,7 +8,7 @@ before:
     - sh -c 'go run . completion "zsh" >./completions/arc.zsh'
     - sh -c 'go run . completion "fish" >./completions/arc.fish'
 changelog:
-  skip: true
+  disable: true
 builds:
   - binary: arc
     env:
