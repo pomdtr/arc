@@ -133,6 +133,7 @@ func NewCmdWindowList() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().BoolVar(&flags.Json, "json", false, "output as json")
 	return cmd
 }
 
