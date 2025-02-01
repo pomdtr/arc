@@ -55,7 +55,7 @@ func NewCmdTab() *cobra.Command {
 
 	cmd.AddCommand(NewCmdTabGet())
 	cmd.AddCommand(NewCmdTabList())
-	cmd.AddCommand(NewCmdTabSelect())
+	cmd.AddCommand(NewCmdTabFocus())
 	cmd.AddCommand(NewCmdTabCreate())
 	cmd.AddCommand(NewCmdTabClose())
 	cmd.AddCommand(NewCmdTabReload())
@@ -124,8 +124,9 @@ func NewCmdTabCreate() *cobra.Command {
 		LittleArc bool
 	}
 	cmd := &cobra.Command{
-		Use:   "create <url>",
-		Short: `Create a new tab.`,
+		Use:     "create <url>",
+		Short:   `Create a new tab.`,
+		Aliases: []string{"open", "new"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var osascript string
 			if flags.LittleArc {
@@ -159,9 +160,9 @@ func NewCmdTabCreate() *cobra.Command {
 	return cmd
 }
 
-func NewCmdTabSelect() *cobra.Command {
+func NewCmdTabFocus() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "select",
+		Use:   "focus <tab-id>",
 		Short: "Select a tab by id",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -198,8 +199,9 @@ func NewCmdTabList() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: `List tabs`,
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   `List tabs`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output, err := runApplescript(listTabsScript)
 			if err != nil {
@@ -290,9 +292,10 @@ func NewCmdTabList() *cobra.Command {
 
 func NewCmdTabClose() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "close",
-		Short: "Close a tab",
-		Args:  cobra.MaximumNArgs(1),
+		Use:     "close",
+		Aliases: []string{"remove", "rm"},
+		Short:   "Close a tab",
+		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				if _, err := runApplescript(`tell application "Arc"

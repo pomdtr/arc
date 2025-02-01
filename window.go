@@ -39,9 +39,10 @@ func NewCmdWindowCreate() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "create [url]",
-		Short: "Create a new window",
-		Args:  cobra.MaximumNArgs(1),
+		Use:     "create [url]",
+		Short:   "Create a new window",
+		Aliases: []string{"new"},
+		Args:    cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var applescript string
 			if flags.Incognito {
@@ -91,8 +92,9 @@ func NewCmdWindowList() *cobra.Command {
 	}{}
 
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List windows",
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "List windows",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output, err := runApplescript(listWindowsScript)
 			if err != nil {
@@ -139,8 +141,9 @@ func NewCmdWindowList() *cobra.Command {
 
 func NewCmdWindowClose() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "close",
-		Short: "Close a window",
+		Use:     "close",
+		Aliases: []string{"remove", "rm"},
+		Short:   "Close a window",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				if _, err := runApplescript(`tell application "Arc" to tell front window to close`); err != nil {

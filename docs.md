@@ -331,6 +331,20 @@ arc tab exec <script> [flags]
   -h, --help          help for exec
 ```
 
+## arc tab focus
+
+Select a tab by id
+
+```
+arc tab focus <tab-id> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for focus
+```
+
 ## arc tab get
 
 Get information about the active tab
@@ -439,20 +453,6 @@ arc tab reload [flags]
   -h, --help   help for reload
 ```
 
-## arc tab select
-
-Select a tab by id
-
-```
-arc tab select [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for select
-```
-
 ## arc version
 
 Print the version of Arc
@@ -537,6 +537,7 @@ arc window list [flags]
 
 ```
   -h, --help   help for list
+      --json   output as json
 ```
 
 
