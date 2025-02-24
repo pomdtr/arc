@@ -20,8 +20,7 @@ import (
 type Tab struct {
 	Title    string `json:"title"`
 	URL      string `json:"url"`
-	WindowID int    `json:"windowId"`
-	TabID    int    `json:"tabId"`
+	ID       string `json:"id"`
 	Location string `json:"location"`
 }
 
@@ -166,17 +165,21 @@ func NewCmdTabFocus() *cobra.Command {
 		Short: "Select a tab by id",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			tabId, err := strconv.Atoi(args[0])
-			if err != nil {
-				return err
-			}
 
 			if _, err := runApplescript(fmt.Sprintf(`tell application "Arc"
-				tell front window
-			  		tell tab %d to select
-				end tell
-				activate
-			end tell`, tabId)); err != nil {
+    if (count of windows) is 0 then
+    make new window
+  end if
+      set tabIndex to 1
+      repeat with aTab in every tab of first window
+        if id of aTab is "%s" then
+          tell tab tabIndex of window 1 to select
+          activate
+          return tabIndex
+        end if
+        set tabIndex to tabIndex + 1
+      end repeat
+    end tell`, args[0])); err != nil {
 				return err
 			}
 
@@ -234,7 +237,7 @@ func NewCmdTabList() *cobra.Command {
 
 			sort.SliceStable(filteredTabs, func(i, j int) bool {
 				if filteredTabs[i].State() == filteredTabs[j].State() {
-					return filteredTabs[i].TabID < filteredTabs[j].TabID
+					return filteredTabs[i].ID < filteredTabs[j].ID
 				}
 
 				if filteredTabs[i].State() == TabStateFavorite {
@@ -272,7 +275,7 @@ func NewCmdTabList() *cobra.Command {
 			}
 
 			for _, tab := range filteredTabs {
-				printer.AddField(strconv.Itoa(tab.TabID))
+				printer.AddField(tab.ID)
 				printer.AddField(string(tab.State()))
 				printer.AddField(tab.Title)
 				printer.AddField(tab.URL)
