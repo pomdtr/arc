@@ -8,7 +8,7 @@ import (
 
 	_ "embed"
 
-	"github.com/cli/go-gh/pkg/tableprinter"
+	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -96,6 +96,7 @@ func NewCmdSpaceList() *cobra.Command {
 				printer = tableprinter.New(os.Stdout, true, w)
 			}
 
+			printer.AddHeader([]string{"ID", "Title"})
 			for _, space := range spaces {
 				printer.AddField(strconv.Itoa(space.ID))
 				printer.AddField(space.Title)

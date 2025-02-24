@@ -11,7 +11,7 @@ import (
 
 	_ "embed"
 
-	"github.com/cli/go-gh/pkg/tableprinter"
+	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -274,6 +274,7 @@ func NewCmdTabList() *cobra.Command {
 				printer = tableprinter.New(os.Stdout, true, w)
 			}
 
+			printer.AddHeader([]string{"ID", "State", "Title", "URL"})
 			for _, tab := range filteredTabs {
 				printer.AddField(tab.ID)
 				printer.AddField(string(tab.State()))

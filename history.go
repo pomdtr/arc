@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cli/go-gh/pkg/tableprinter"
+	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	sb "github.com/huandu/go-sqlbuilder"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
@@ -110,6 +110,7 @@ func NewCmdHistory() *cobra.Command {
 				printer = tableprinter.New(os.Stdout, true, w)
 			}
 
+			printer.AddHeader([]string{"URL", "Title", "LastVisitedAt"})
 			for _, entry := range entries {
 				printer.AddField(entry.URL)
 				printer.AddField(entry.Title)
